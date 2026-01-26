@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="es" class="no-js">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sonetos Venezolanos // Lab E.E.</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=VT323&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap"
+    rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            'gothic': ['"Bluu Next"', 'cursive'],
+            'tech': ['"VT323"', 'monospace'],
+            'body': ['"Courier Prime"', 'monospace'],
+          },
+          colors: {
+            'vanguard-black': '#050505',
+            'vanguard-white': '#e0e0e0',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- GSAP & Lenis -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+
+  <style>
+    @font-face {
+      font-family: 'Bluu Next';
+      src: url('../fonts/bluunext-bold-webfont.woff2') format('woff2');
+      font-weight: bold;
+      font-style: normal;
+    }
+
+    :root {
+      --bg-color: #000000;
+      --text-color: #e0e0e0;
+      --border-color: #333;
+    }
+
+    html {
+      background: #000;
+      scroll-snap-type: y mandatory;
+      font-size: 80%;
+      /* Simulate 80% browser zoom */
+    }
+
+    body {
+      background-color: transparent;
+      color: var(--text-color);
+      font-family: 'Courier Prime', monospace;
+      margin: 0;
+      /* overflow-x hidden is good, but snap needs scrolling enabled on y */
+      overflow-x: hidden;
+      image-rendering: pixelated;
+      -webkit-font-smoothing: none;
+    }
+
+    /* Fixed "Lens" Overlay - Applies filter to everything behind it */
+    .global-lens {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 99999;
+      backdrop-filter: contrast(500%) grayscale(100%);
+    }
+
+    .page-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      /* justify-content center removed to allow snap flow */
+      align-items: center;
+      padding: 0;
+      /* Full bleed for snap pages */
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .critter-card {
+      position: relative;
+      background: #000;
+      /* Border and box-shadow removed for cleaner look */
+      /* border: 1px solid #fff; */
+      /* box-shadow:
+        inset 0 0 0 4px #000,
+        inset 0 0 0 5px #fff; */
+
+      /* Book Mode: Wide & Floating */
+      width: 98%;
+      /* Maximize width as requested */
+      max-width: none;
+      min-height: 70vh;
+      /* Shorter to ensure gaps */
+      margin: 15vh auto;
+      /* Significant vertical spacing */
+
+      scroll-snap-align: center;
+      scroll-snap-stop: always;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 4rem;
+      box-sizing: border-box;
+    }
+
+    /* Also make Header and Intro snap pages */
+    /* Also make Header and Intro snap pages */
+    header,
+    .intro-section {
+      min-height: 100vh;
+      scroll-snap-align: center;
+      /* Center alignment for better pacing */
+      scroll-snap-stop: always;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      margin: 0;
+      padding: 2rem;
+      box-sizing: border-box;
+    }
+
+    .card-inner {
+      padding: 3rem 2rem;
+    }
+
+    .header-title-main {
+      font-family: 'Bluu Next', cursive;
+      font-size: clamp(4rem, 8vw, 8rem);
+      line-height: 0.8;
+      color: #fff;
+    }
+
+    .poem-title-gothic {
+      font-family: 'Bluu Next', cursive;
+      font-size: 3rem;
+      line-height: 0.9;
+      margin-bottom: 0.75rem;
+      text-shadow: 2px 2px 0 #333;
+      color: #fff;
+    }
+
+    .poem-title-gothic.text-center {
+      text-align: center;
+    }
+
+    .author-badge {
+      font-family: 'VT323', monospace;
+      font-size: 1.25rem;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      display: block;
+      border-top: 1px dashed #555;
+      padding-top: 0.5rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .drop-cap-gothic {
+      float: left;
+      font-family: 'Bluu Next', cursive;
+      font-size: 4.5rem;
+      line-height: 0.7;
+      margin-right: 1rem;
+      margin-top: 0.3rem;
+      color: #fff;
+    }
+
+    .poem-text-translation {
+      font-family: 'Courier Prime', monospace;
+      color: #e0e0e0;
+    }
+
+    .poem-text-original {
+      font-family: 'Courier Prime', monospace;
+      color: #b0b0b0;
+    }
+
+    .poem-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    @media (min-width: 768px) {
+      .poem-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .corner-decor {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      color: #fff;
+      pointer-events: none;
+      display: none;
+      /* Hidden as requested */
+    }
+
+    .c-tl {
+      top: -12px;
+      left: -12px;
+    }
+
+    .c-tr {
+      top: -12px;
+      right: -12px;
+      transform: scaleX(-1);
+    }
+
+    .c-bl {
+      bottom: -12px;
+      left: -12px;
+      transform: scaleY(-1);
+    }
+
+    .c-br {
+      bottom: -12px;
+      right: -12px;
+      transform: scale(-1);
+    }
+
+    /* Table of Contents - Rebuilt */
+    .toc-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.98);
+      z-index: 9000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      overflow-y: auto;
+      padding: 6rem 2rem 2rem;
+    }
+
+    .toc-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .toc-container {
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .toc-title {
+      font-family: 'Bluu Next', cursive;
+      font-size: 3rem;
+      color: #fff;
+      text-align: center;
+      margin-bottom: 3rem;
+      text-shadow: 2px 2px 0 #333;
+    }
+
+    .toc-list {
+      list-style: none;
+      padding: 0;
+      text-align: center;
+    }
+
+    .toc-item {
+      margin-bottom: 1.5rem;
+      border-bottom: 1px dashed #555;
+      padding-bottom: 1.5rem;
+    }
+
+    .toc-link {
+      display: block;
+      font-family: 'Courier Prime', monospace;
+      font-size: 1.25rem;
+      color: #fff;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .toc-link:hover {
+      color: #999;
+    }
+
+    .toc-author {
+      font-family: 'VT323', monospace;
+      font-size: 1rem;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 0.5rem;
+    }
+
+
+
+    /* Introduction Section - Floating Design */
+    .intro-section {
+      width: 100%;
+      margin-bottom: 8rem;
+      position: relative;
+      padding: 0 1rem;
+    }
+
+    .intro-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 4rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 768px) {
+      .intro-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 6rem;
+      }
+    }
+
+    .intro-col {
+      position: relative;
+      padding: 0;
+    }
+
+    .intro-col::before {
+      content: '';
+      position: absolute;
+      top: -1rem;
+      left: 0;
+      width: 60px;
+      height: 2px;
+      background: #fff;
+    }
+
+    .intro-title {
+      font-family: 'VT323', monospace;
+      font-size: 1.25rem;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      margin-bottom: 2rem;
+      opacity: 0.7;
+    }
+
+    .intro-text {
+      font-family: 'Courier Prime', monospace;
+      font-size: 1rem;
+      line-height: 1.8;
+      color: #e0e0e0;
+    }
+
+    .intro-text p {
+      margin-bottom: 1.25rem;
+    }
+
+    .intro-col-spanish .intro-text {
+      font-style: italic;
+      color: #b0b0b0;
+    }
+
+    .intro-col-spanish::before {
+      background: #666;
+    }
+  </style>
+</head>
+
+<body>
+
+  <svg style="display: none;">
+    <symbol id="icon-corner-gothic" viewBox="0 0 100 100">
+      <path d="M0,0 L0,80 Q5,60 15,50 Q25,40 50,40 L60,40 L50,45 L65,40 L50,35 L60,40 Q30,40 20,20 Q10,10 10,0 Z"
+        fill="currentColor" />
+      <path d="M0,0 L80,0 Q60,5 50,15 Q40,25 40,50 L40,60 L45,50 L40,65 L35,50 L40,60 Q40,30 20,20 Q10,10 0,10 Z"
+        fill="currentColor" />
+      <path d="M25,25 L35,25 L25,35 L15,25 Z" fill="currentColor" />
+      <circle cx="65" cy="15" r="2" fill="currentColor" />
+      <circle cx="15" cy="65" r="2" fill="currentColor" />
+      <path d="M75,5 L85,5 L80,15 Z" fill="currentColor" />
+      <path d="M5,75 L5,85 L15,80 Z" fill="currentColor" />
+      <path d="M5,5 L95,5" fill="none" stroke="currentColor" stroke-width="1.5" />
+      <path d="M5,5 L5,95" fill="none" stroke="currentColor" stroke-width="1.5" />
+    </symbol>
+  </svg>
+
+  <!-- Nav -->
+  <nav
+    class="fixed top-0 left-0 w-full z-[800] p-[24px] flex justify-between items-center text-[#e0e0e0] font-tech text-[12.5px] uppercase tracking-widest pointer-events-none mix-blend-exclusion">
+    <a href="../index.html" class="pointer-events-auto flex items-center gap-2 group decoration-none">
+      <svg class="w-10 h-auto fill-current text-[#e0e0e0] group-hover:text-white transition-colors"
+        viewBox="0 0 75.95 56.5" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M10.6.25h0c-.66,0-1.1.69-.82,1.29l8.97,19.33c1.6,3.44-.92,7.38-4.71,7.38h0c-1.74,0-3.33,1.01-4.06,2.59L.59,51.05c-1.13,2.42.64,5.2,3.32,5.2h4.93c1.42,0,2.72-.83,3.32-2.12l11.1-23.9c.58-1.25.58-2.7,0-3.95L11.42.78c-.15-.32-.47-.53-.82-.53Z" />
+        <path
+          d="M27.6.25h0c-.66,0-1.1.69-.82,1.29l8.97,19.33c1.6,3.44-.92,7.38-4.71,7.38h0c-1.74,0-3.33,1.01-4.06,2.59l-9.38,20.21c-1.13,2.42.64,5.2,3.32,5.2h4.93c1.42,0,2.72-.83,3.32-2.12l11.1-23.9c.58-1.25.58-2.7,0-3.95L28.42.78c-.15-.32-.47-.53-.82-.53Z" />
+        <path
+          d="M62.6,56.25h0c-.66,0-1.1-.69-.82-1.29l8.97-19.33c1.6-3.44-.92-7.38-4.71-7.38h0c-1.74,0-3.33-1.01-4.06-2.59l-9.38-20.21c-1.13,2.42.64-5.2,3.32-5.2h4.93c1.42,0,2.72.83,3.32,2.12l11.1,23.9c.58,1.25.58,2.7,0,3.95l-11.84,25.5c-.15.32-.47.53-.82.53Z" />
+        <path
+          d="M45.6,56.25h0c-.66,0-1.1-.69-.82-1.29l8.97-19.33c1.6-3.44-.92-7.38-4.71-7.38h0c-1.74,0-3.33-1.01-4.06-2.59l-9.38-20.21c-1.13-2.42.64-5.2,3.32-5.2h4.93c1.42,0,2.72.83,3.32,2.12l11.1,23.9c.58,1.25.58,2.7,0,3.95l-11.84,25.5c-.15.32-.47.53-.82.53Z" />
+      </svg>
+    </a>
+    <span>ESTUDIO 009 // SONETOS.REV.DITH</span>
+  </nav>
+
+  <!-- Index Button -->
+  <button id="indexBtn"
+    class="fixed bottom-8 right-8 bg-black border border-dashed border-white text-white px-4 py-2 font-tech text-xl uppercase cursor-pointer hover:bg-white hover:text-black transition-colors pointer-events-auto"
+    style="font-family: 'VT323', monospace; z-index: 8000;">INDEX</button>
+
+  <!-- Table of Contents Overlay -->
+  <div class="toc-overlay" id="tocOverlay">
+    <div class="toc-container" onclick="event.stopPropagation()">
+      <h2 class="toc-title">Índice</h2>
+      <ul class="toc-list">
+        <li class="toc-item">
+          <a href="#epigraph" class="toc-link">Epígrafe // Derrida</a>
+          <div class="toc-author">Introduction</div>
+        </li>
+        <li class="toc-item">
+          <a href="#africa" class="toc-link">Africa</a>
+          <div class="toc-author">Eduardo Arroyo Lameda</div>
+        </li>
+        <li class="toc-item">
+          <a href="#fleeting-joy" class="toc-link">Fleeting Joy / Dicha Fugaz</a>
+          <div class="toc-author">Clara Vivas Briceño</div>
+        </li>
+        <li class="toc-item">
+          <a href="#biography-lily" class="toc-link">Biography of the Lily / Biografía del
+            Lirio</a>
+          <div class="toc-author">Luz Machado de Arnao</div>
+        </li>
+        <li class="toc-item">
+          <a href="#mature-orores" class="toc-link">As Mature Orores / Cual Orores Maduros</a>
+          <div class="toc-author">Francisco Lazo Martí</div>
+        </li>
+        <li class="toc-item">
+          <a href="#the-ox" class="toc-link">The Ox / El Buey</a>
+          <div class="toc-author">Alejandro Carias</div>
+        </li>
+        <li class="toc-item">
+          <a href="#shattered-star" class="toc-link">Shattered Star / Estrellas Rotas</a>
+          <div class="toc-author">Francisco Pimentel</div>
+        </li>
+        <li class="toc-item">
+          <a href="#dry-leaves" class="toc-link">Dry Leaves / Las Hojas Secas</a>
+          <div class="toc-author">Fernando Paz Castillo</div>
+        </li>
+        <li class="toc-item">
+          <a href="#mount-avila" class="toc-link">Mount Avila / Monte Ávila</a>
+          <div class="toc-author">Enriqueta Arvelo Larriva</div>
+        </li>
+        <li class="toc-item">
+          <a href="#music-echo" class="toc-link">Music and Echo of Your Absence / Música y Eco de
+            Tu Ausencia</a>
+          <div class="toc-author">Pascual Venegas Filardo</div>
+        </li>
+        <li class="toc-item">
+          <a href="#praise-only" class="toc-link">In Praise Only / Solo Alabanza</a>
+          <div class="toc-author">Pedro Pablo Paredes</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="page-container">
+
+    <header class="w-full mb-32 relative text-center">
+      <h1 class="header-title-main">SONETOS</h1>
+
+      <div class="my-6 border-t border-b border-white py-2 w-full max-w-2xl mx-auto">
+        <span class="font-tech text-xl tracking-[0.5em] uppercase text-white">Anthology_Raíz // 009</span>
+      </div>
+
+      <h1 class="header-title-main">VENEZOLANOS</h1>
+    </header>
+
+    <!-- Introduction: Derrida Epigraph -->
+    <section class="intro-section" id="epigraph">
+      <div class="intro-grid">
+        <div class="intro-col intro-col-english">
+          <h3 class="intro-title">Derridean Epigraph</h3>
+          <div class="intro-text">
+            <p>This word "relevant," this present participle that functions as a predicate, is here entrusted with an
+              exorbitant task. Not the task of the translator, but the task of defining—"nothing less"—the essence of
+              translation […].</p>
+            <p>On the one hand, it extends and announces the accomplishment of an ambitious response to the question
+              of
+              the essence of translation. (What is a translation?) To know what a relevant translation can mean and
+              be,
+              it is necessary to know what the essence of translation, its mission, its ultimate goal, its vocation
+              is.
+            </p>
+            <p>On the other hand, a relevant translation is assumed, rightly or wrongly, to be better than a
+              translation
+              that is not relevant. A relevant translation is held, rightly or wrongly, to be the best translation
+              possible. The teleological definition of translation, the definition of the essence that is realized in
+              translation, is therefore implicated in the definition of a relevant translation. The question, What is
+              a
+              relevant translation? would return to the question, What is translation? or, What should a translation
+              be?
+              And the question, What should a translation be? implies, as if synonymously, What should the best
+              possible
+              translation be?</p>
+          </div>
+        </div>
+        <div class="intro-col intro-col-spanish">
+          <h3 class="intro-title">Epígrafe Derrideano</h3>
+          <div class="intro-text">
+            <p>Esta palabra, "relevante", este participio presente que funciona como predicado, tiene aquí encomendada
+              una tarea exorbitante. No la tarea del traductor, sino la tarea de definir —"nada menos"— la esencia de
+              la
+              traducción […].</p>
+            <p>Por un lado, extiende y anuncia el cumplimiento de una respuesta ambiciosa a la pregunta por la esencia
+              de la traducción. (¿Qué es una traducción?) Para saber qué puede significar y ser una traducción
+              relevante, es necesario saber cuál es la esencia de la traducción, su misión, su meta última, su
+              vocación.
+            </p>
+            <p>Por otro lado, se asume, con razón o sin ella, que una traducción relevante es mejor que una traducción
+              que no es relevante. Se sostiene que una traducción relevante, con razón o sin ella, es la mejor
+              traducción posible. La definición teleológica de la traducción, la definición de la esencia que se
+              realiza
+              en la traducción, está por lo tanto implicada en la definición de una traducción relevante. La pregunta
+              ¿Qué es una traducción relevante? nos devolvería a la pregunta ¿Qué es la traducción? o ¿Qué debería ser
+              una traducción?. Y la pregunta ¿Qué debería ser una traducción? implica, como si fuera un sinónimo: ¿Qué
+              debería ser la mejor traducción posible?</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 01: Africa -->
+    <article class="critter-card" id="africa">
+      <div class="corner-decor c-tl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-tr"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-bl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-br"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="card-inner">
+        <div class="poem-grid items-start gap-12">
+          <div class="poem-col-left md:pr-8 md:border-r md:border-gray-800">
+            <h2 class="poem-title-gothic text-center">Africa</h2>
+            <span class="author-badge">Eduardo Arroyo Lameda</span>
+            <div class="poem-text-translation text-xl leading-relaxed">
+              <p class="mb-4"><span class="drop-cap-gothic">B</span>efore the mute Sphinx of admiration I get
+                drunk,<br>
+                and before the hundred pyramids of heroic architecture,<br>
+                and before the pertinacity and the brio of Carthage,<br>
+                and before the wind that tortures the Sahara's face;</p>
+              <p class="mb-4">but I know that in you, Africa, all is foul and fateful,<br>
+                that in the house of the world you are the dark piece,<br>
+                in whose depths, overwhelmed by ravage,<br>
+                the sibylline eyes of dread shine.</p>
+              <p class="mb-4">The lion is your guest; the stray lion<br>
+                that roars through the court of other vermin<br>
+                roaring in the shadow of your deep bosom;</p>
+              <p class="mb-4">with the simoon you refresh your sullen regions,<br>
+                and challenge the smiling colors of the world<br>
+                with the living ebony that your guts pour out.</p>
+            </div>
+          </div>
+          <div class="poem-col-right">
+            <h2 class="poem-title-gothic text-center text-gray-400 opacity-80">África</h2>
+            <span class="author-badge">Eduardo Arroyo Lameda</span>
+            <div class="poem-text-original italic text-xl leading-relaxed">
+              <p class="mb-4">Ante la muda Esfinge de admiración me embriago,<br>
+                y ante las cien pirámides de heroica arquitectura,<br>
+                y ante la pertinacia y el brío de Cartago,<br>
+                y ante el viento que el rostro del Sahara tortura;</p>
+              <p class="mb-4">pero sé que en ti, África, todo es fosco y aciago,<br>
+                que en la casa del mundo tú eres la pieza oscura,<br>
+                entre cuyas tinieblas, conmovidas de estrago,<br>
+                brillan los sibilinos ojos de la pavura.</p>
+              <p class="mb-4">El león es tu huésped; el león vagabundo<br>
+                que ruge entre la corte de otras alimañas<br>
+                rugientes en la sombra de tu seno profundo;</p>
+              <p class="mb-4">con el simún refrescas tus regiones hurañas,<br>
+                y retas los colores sonrientes del mundo<br>
+                con el ébano vivo que arrojan tus entrañas.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 02: Fleeting Joy -->
+    <article class="critter-card" id="fleeting-joy">
+      <div class="corner-decor c-tl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-tr"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-bl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-br"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="card-inner">
+        <div class="poem-grid items-start gap-12">
+          <div class="poem-col-left md:pr-8 md:border-r md:border-gray-800">
+            <h2 class="poem-title-gothic text-center">Fleeting Joy</h2>
+            <span class="author-badge">Clara Vivas Briceño</span>
+            <div class="poem-text-translation text-xl leading-relaxed">
+              <p class="mb-4"><span class="drop-cap-gothic">R</span>eliving yesterdays, I laid my forehead<br>
+                on your brave and untamed chest;<br>
+                and as waters that flow into the same river<br>
+                our lives rushed along together.</p>
+              <p class="mb-4">United they beat tenderly<br>
+                today as yesterday, your heart and mine;<br>
+                and it was spring in the summer<br>
+                as the past arose in the present.</p>
+              <p class="mb-4">But our happiness lasted as long<br>
+                as the light the sun shines on the west<br>
+                on each day's sorrowful agony;</p>
+              <p class="mb-4">But in my loving soul still burns<br>
+                the light of that ardent parenthesis<br>
+                that in one merged his soul with mine.</p>
+            </div>
+          </div>
+          <div class="poem-col-right">
+            <h2 class="poem-title-gothic text-center text-gray-400 opacity-80">Dicha Fugaz</h2>
+            <span class="author-badge">Clara Vivas Briceño</span>
+            <div class="poem-text-original italic text-xl leading-relaxed">
+              <p class="mb-4">Reviviendo el ayer, puse mi frente<br>
+                sobre tu pecho indómito y bravío;<br>
+                y como aguas que van a un mismo río<br>
+                nuestras vidas corrieron juntamente.</p>
+              <p class="mb-4">Unidos palpitaron dulcemente<br>
+                hoy como ayer, su corazón y el mío;<br>
+                y fue la primavera en el estío<br>
+                al surgir el pasado en el presente.</p>
+              <p class="mb-4">Mas, duró nuestra dicha lo que dura<br>
+                la luz del sol que alumbra en el poniente<br>
+                el triste agonizar de cada día;</p>
+              <p class="mb-4">Mas en mi alma amante aún fulgura<br>
+                la luz de ese paréntesis ardiente<br>
+                que en una fundió su alma con la mía.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 03: Biography of the Lily -->
+    <article class="critter-card" id="biography-lily">
+      <div class="corner-decor c-tl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-tr"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-bl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-br"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="card-inner">
+        <div class="poem-grid items-start gap-12">
+          <div class="poem-col-left md:pr-8 md:border-r md:border-gray-800">
+            <h2 class="poem-title-gothic text-center">Biography of the Lily</h2>
+            <span class="author-badge">Luz Machado de Arnao</span>
+            <div class="poem-text-translation text-xl leading-relaxed">
+              <p class="mb-4"><span class="drop-cap-gothic">S</span>ilence forged its architecture.<br>
+                In you solitude built its battlement.<br>
+                Glove of aroma that the breeze releases.<br>
+                Dream with a brief dimension of height.</p>
+              <p class="mb-4">Herald of the fountain and its cool.<br>
+                Sepulcher of the dew and the moth.<br>
+                dial of the sun that the air commands<br>
+                towards the threshold of fire and its adventure.</p>
+              <p class="mb-4">Within you the marble raises its vigil<br>
+                and the dovecote swirls its flight<br>
+                and the cloud makes its most beautiful season.</p>
+              <p class="mb-4">Narcissus left you his living imprint<br>
+                and is reflected untouched, sky above,<br>
+                by the remote mirror of the star.</p>
+            </div>
+          </div>
+          <div class="poem-col-right">
+            <h2 class="poem-title-gothic text-center text-gray-400 opacity-80">Biografía del Lirio</h2>
+            <span class="author-badge">Luz Machado de Arnao</span>
+            <div class="poem-text-original italic text-xl leading-relaxed">
+              <p class="mb-4">Forjó el silencio en ti su arquitectura.<br>
+                En ti la soledad alzó su almena.<br>
+                Guante de aroma que la brisa estrena.<br>
+                Sueño con breve dimensión de altura.</p>
+              <p class="mb-4">Heraldo de la fuente y su frescura.<br>
+                Sepulcro del rocío y la falena.<br>
+                Minutero del sol que el aire ordena<br>
+                hacia el umbral del fuego y su aventura.</p>
+              <p class="mb-4">En ti levanta el mármol su desvelo<br>
+                y el palomar arremolina el vuelo<br>
+                y hace la nube su estación más bella.</p>
+              <p class="mb-4">Narciso te dejó su huella viva<br>
+                y la refleja intacta, cielo arriba,<br>
+                el espejo remoto de la estrella.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 04: As Mature Orores -->
+    <article class="critter-card" id="mature-orores">
+      <div class="corner-decor c-tl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-tr"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-bl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-br"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="card-inner">
+        <div class="poem-grid items-start gap-12">
+          <div class="poem-col-left md:pr-8 md:border-r md:border-gray-800">
+            <h2 class="poem-title-gothic text-center">As Mature Orores</h2>
+            <span class="author-badge">Francisco Lazo Martí</span>
+            <div class="poem-text-translation text-xl leading-relaxed">
+              <p class="mb-4"><span class="drop-cap-gothic">I</span>'ve longed to be a bird. I've dreamed<br>
+                of flying over your tempting lips,<br>
+                for they wear the carmine of the orores<br>
+                that the sun's kisses have seasoned.</p>
+              <p class="mb-4">But your eyes, madam, have humiliated<br>
+                that flight of love: so are, traitors,<br>
+                your eyes, as piercing bows,<br>
+                that kill without wounding the one they gaze upon.</p>
+              <p class="mb-4">Dream may have been of a foolish night:<br>
+                but in this pure April morning<br>
+                something in me sighs and flutters,</p>
+              <p class="mb-4">jealous of the wild bird<br>
+                that, with its head buried in the foliage,<br>
+                peaks the carmine skin of the orores.</p>
+            </div>
+          </div>
+          <div class="poem-col-right">
+            <h2 class="poem-title-gothic text-center text-gray-400 opacity-80">Cual Orores Maduros</h2>
+            <span class="author-badge">Francisco Lazo Martí</span>
+            <div class="poem-text-original italic text-xl leading-relaxed">
+              <p class="mb-4">He querido ser pájaro. He soñado<br>
+                volar sobre tus labios tentadores,<br>
+                pues lucen el carmín de los orores<br>
+                que los besos del sol han sazonado.</p>
+              <p class="mb-4">Mas tus ojos, señora, han humillado<br>
+                ese vuelo de amor: que así, traidores,<br>
+                son tus ojos, cual arcos flechadores<br>
+                que matan sin herir al que han mirado.</p>
+              <p class="mb-4">Ensueño pudo ser de noche insana:<br>
+                pero en esta de abril pura mañana<br>
+                algo que en mí suspira y aletea,</p>
+              <p class="mb-4">celos tiene del pájaro salvaje<br>
+                que, hundida la cabeza en el follaje,<br>
+                carmínea piel de orores picotea.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 05: The Ox -->
+    <article class="critter-card" id="the-ox">
+      <div class="corner-decor c-tl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-tr"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-bl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-br"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="card-inner">
+        <div class="poem-grid items-start gap-12">
+          <div class="poem-col-left md:pr-8 md:border-r md:border-gray-800">
+            <h2 class="poem-title-gothic text-center">The Ox</h2>
+            <span class="author-badge">Alejandro Carias</span>
+            <div class="poem-text-translation text-xl leading-relaxed">
+              <p class="mb-4"><span class="drop-cap-gothic">W</span>hile the sun melts you into vivid gold<br>
+                you plow the furrow in scorched slumber;<br>
+                and rather than the goad, what annoys you<br>
+                the sting of the buzzing horsefly.</p>
+              <p class="mb-4">You were once a coveted bull<br>
+                of graceful antlers and a handsome figure,<br>
+                as the one whose head was crowned by Europe<br>
+                and stole Europe's virginal decorum.</p>
+              <p class="mb-4">Today to the strap you humiliate the back of your neck<br>
+                and you drag your snout along the ground<br>
+                like a slave, and you are harassed by stonechats.</p>
+              <p class="mb-4">You clear a pleasant field of stubble<br>
+                and mutilated you groan to the skies<br>
+                and your eyes are flooded with tears.</p>
+            </div>
+          </div>
+          <div class="poem-col-right">
+            <h2 class="poem-title-gothic text-center text-gray-400 opacity-80">El Buey</h2>
+            <span class="author-badge">Alejandro Carias</span>
+            <div class="poem-text-original italic text-xl leading-relaxed">
+              <p class="mb-4">Mientras te funde el sol en vivo oro<br>
+                labras el surco en abrasada siesta;<br>
+                y más que la garrocha te molesta<br>
+                el aguijón del tábano sonoro.</p>
+              <p class="mb-4">Enantes fuiste codiciado toro<br>
+                de astas airosas y figura apuesta,<br>
+                como al que Europa coronó la testa<br>
+                y hurtó de Europa el virginal decoro.</p>
+              <p class="mb-4">Hoy la cerviz a la coyunda humillas<br>
+                y arrastras el hocico por los suelos<br>
+                como esclavo, y te acosan tarabillas.</p>
+              <p class="mb-4">Limpias ameno campo de rastrojos<br>
+                y mutilado muges a los cielos<br>
+                y se inundan de lágrimas tus ojos.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 06: Shattered Star -->
+    <article class="critter-card" id="shattered-star">
+      <div class="corner-decor c-tl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-tr"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-bl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-br"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="card-inner">
+        <div class="poem-grid items-start gap-12">
+          <div class="poem-col-left md:pr-8 md:border-r md:border-gray-800">
+            <h2 class="poem-title-gothic text-center">Shattered Star</h2>
+            <span class="author-badge">Francisco Pimentel</span>
+            <div class="poem-text-translation text-xl leading-relaxed">
+              <p class="mb-4"><span class="drop-cap-gothic">B</span>ack when for me the science was unknown<br>
+                and an odd sigh would surprise me,<br>
+                my father to my questions answered<br>
+                that it was a star shattered by the bad guys.</p>
+              <p class="mb-4">Past that sweet and remote age,<br>
+                the old astronomy professor<br>
+                reprimanded my candor with energy<br>
+                and in the middle of a class called me an idiot.</p>
+              <p class="mb-4">Today I know the phenomenon; and yet,<br>
+                when my life was blinded for an instant,<br>
+                like an exhalation, by your beautiful image</p>
+              <p class="mb-4">and you left my spiritual heaven,<br>
+                I became fearful and sad again.<br>
+                as if I had shatter some star.</p>
+            </div>
+          </div>
+          <div class="poem-col-right">
+            <h2 class="poem-title-gothic text-center text-gray-400 opacity-80">Estrellas Rotas</h2>
+            <span class="author-badge">Francisco Pimentel</span>
+            <div class="poem-text-original italic text-xl leading-relaxed">
+              <p class="mb-4">Cuando era para mí la ciencia ignota<br>
+                y alguna exhalación me sorprendía,<br>
+                mi padre a mis preguntas respondía<br>
+                que era una estrella por los malos rota.</p>
+              <p class="mb-4">Después de aquella edad dulce y remota,<br>
+                el viejo profesor de astronomía<br>
+                reprendió mi candor con energía<br>
+                y en plena clase me trató de idiota.</p>
+              <p class="mb-4">Hoy conozco el fenómeno; y no obstante,<br>
+                cuando mi vida iluminó un instante,<br>
+                cual una exhalación, tu imagen bella</p>
+              <p class="mb-4">y de mi cielo espiritual te fuiste,<br>
+                torné a quedarme temeroso y triste<br>
+                como si hubiera roto alguna estrella.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 07: Dry Leaves -->
+    <article class="critter-card" id="dry-leaves">
+      <div class="corner-decor c-tl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-tr"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-bl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-br"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="card-inner">
+        <div class="poem-grid items-start gap-12">
+          <div class="poem-col-left md:pr-8 md:border-r md:border-gray-800">
+            <h2 class="poem-title-gothic text-center">Dry Leaves</h2>
+            <span class="author-badge">Fernando Paz Castillo</span>
+            <div class="poem-text-translation text-xl leading-relaxed">
+              <p class="mb-4"><span class="drop-cap-gothic">A</span> light breeze rustles the foliage.<br>
+                dry leaves roll down the long avenue.<br>
+                Where are they going?... Who knows where the round<br>
+                of the traveling leaves are going! There is one that impelled</p>
+              <p class="mb-4">by a secret will falls, curls a wave<br>
+                that generates another and another on the sleeping water.<br>
+                The others all flee along the deep avenue<br>
+                that sinks in the afternoon, beyond life.</p>
+              <p class="mb-4">Then the breeze rises; it lifts them up; there is a flight,<br>
+                a flock of dry leaves... one climbs, culminates<br>
+                and is stained by the sun and gets lost in the sky...</p>
+              <p class="mb-4">And as the breeze fails it, like a dead bird,<br>
+                it falls heavily... What divine will<br>
+                has taken away this afternoon the leaves of my orchard?</p>
+            </div>
+          </div>
+          <div class="poem-col-right">
+            <h2 class="poem-title-gothic text-center text-gray-400 opacity-80">Las Hojas Secas</h2>
+            <span class="author-badge">Fernando Paz Castillo</span>
+            <div class="poem-text-original italic text-xl leading-relaxed">
+              <p class="mb-4">Una brisa ligera estremece la fronda.<br>
+                ruedan las hojas secas por la larga avenida.<br>
+                ¿adónde van?... ¡Quién sabe adonde va la ronda<br>
+                de las hojas viajeras! Hay una que impelida</p>
+              <p class="mb-4">por voluntad secreta cae, riza una onda<br>
+                que genera otra y otra sobre el agua dormida.<br>
+                Las demás todas huyen por la avenida honda<br>
+                que se hunde en la tarde, más allá de la vida.</p>
+              <p class="mb-4">Luego arrecia la brisa; las levanta; hay un vuelo,<br>
+                un tropel de hojas secas... una sube, culmina<br>
+                y se mancha de sol y se pierde en el cielo...</p>
+              <p class="mb-4">Y al faltarle la brisa, como un pájaro muerto<br>
+                cae pesadamente... ¿Qué voluntad divina<br>
+                se ha llevado esta tarde las hojas de mi huerto?</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 08: Mount Avila -->
+    <article class="critter-card" id="mount-avila">
+      <div class="corner-decor c-tl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-tr"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-bl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-br"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="card-inner">
+        <div class="poem-grid items-start gap-12">
+          <div class="poem-col-left md:pr-8 md:border-r md:border-gray-800">
+            <h2 class="poem-title-gothic text-center">Mount Avila</h2>
+            <span class="author-badge">Enriqueta Arvelo Larriva</span>
+            <div class="poem-text-translation text-xl leading-relaxed">
+              <p class="mb-4"><span class="drop-cap-gothic">Y</span>ou're burning in spring, robust mount.<br>
+                Aromas, and burning are your scents;<br>
+                burning are the symbolic rumors<br>
+                of new breeze, in the leafy bush.</p>
+              <p class="mb-4">Burning are the wild chants of my taste<br>
+                and the nervous flights of colors.<br>
+                The deep pit of cool air is suffocating.<br>
+                And you tremble whole with superb fright.</p>
+              <p class="mb-4">My heartbeats are burning with your fire,<br>
+                Faithful Avila, standing tall through your martyrdoms,<br>
+                mount where eternal temper takes root.</p>
+              <p class="mb-4">Hard flames envelop you without respite.<br>
+                If your lilies are burnt in April<br>
+                there will be no emotion left to contemplate you.</p>
+            </div>
+          </div>
+          <div class="poem-col-right">
+            <h2 class="poem-title-gothic text-center text-gray-400 opacity-80">Monte Ávila</h2>
+            <span class="author-badge">Enriqueta Arvelo Larriva</span>
+            <div class="poem-text-original italic text-xl leading-relaxed">
+              <p class="mb-4">Ardes primaveral, monte robusto.<br>
+                Aromas, y se queman tus olores;<br>
+                se queman los simbólicos rumores<br>
+                de brisa nueva, en el hojoso arbusto.</p>
+              <p class="mb-4">Arden los libres cantos de mi gusto<br>
+                y los nerviosos vuelos de colores.<br>
+                Se asfixia el hondo hueco de frescores.<br>
+                Y vibras todo con soberbio susto.</p>
+              <p class="mb-4">Mis latidos se abrasan con tu fuego,<br>
+                Ávila fiel, erguido en tus martirios,<br>
+                monte donde enraíza eterno temple.</p>
+              <p class="mb-4">Duras llamas te envuelven sin sosiego.<br>
+                Si se queman de abril tus lirios<br>
+                no quedará emoción que te contemple.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 09: Music and Echo of Your Absence -->
+    <article class="critter-card" id="music-echo">
+      <div class="corner-decor c-tl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-tr"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-bl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-br"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="card-inner">
+        <div class="poem-grid items-start gap-12">
+          <div class="poem-col-left md:pr-8 md:border-r md:border-gray-800">
+            <h2 class="poem-title-gothic text-center">Music and Echo of Your Absence</h2>
+            <span class="author-badge">Pascual Venegas Filardo</span>
+            <div class="poem-text-translation text-xl leading-relaxed">
+              <p class="mb-4"><span class="drop-cap-gothic">F</span>leeting plant sown in my path<br>
+                on the blue evening of your first glance.<br>
+                Where the shepherd's breeze<br>
+                of your curls, in golds poured?</p>
+              <p class="mb-4">Song of cold January evening<br>
+                the regret of not seeing you. A blaze<br>
+                of serene pain your last walk<br>
+                towards your world, where you are forbidden for me.</p>
+              <p class="mb-4">Unraveled in the night the sortilege<br>
+                of love in your country, in a clear arpeggio<br>
+                your voice invades me in the lightness of absence.</p>
+              <p class="mb-4">What course shall my eagerness to see you follow?<br>
+                What gate must I breach in order to have you<br>
+                just for an instant in my presence?</p>
+            </div>
+          </div>
+          <div class="poem-col-right">
+            <h2 class="poem-title-gothic text-center text-gray-400 opacity-80">Música y Eco de Tu Ausencia</h2>
+            <span class="author-badge">Pascual Venegas Filardo</span>
+            <div class="poem-text-original italic text-xl leading-relaxed">
+              <p class="mb-4">Planta fugaz sembrada en mi sendero<br>
+                la tarde azul de tu primer mirada.<br>
+                ¿Dónde la brisa de pastor lucero<br>
+                de tus bucles, en oros derramada?</p>
+              <p class="mb-4">Canción de atardecer de frío enero<br>
+                el pesar de no verte. Llamarada<br>
+                de sereno dolor tu andar postrero<br>
+                hacia tu mundo, en que me estás vedada.</p>
+              <p class="mb-4">Destrenzado en la noche el sortilegio<br>
+                de amor en tu país, en claro arpegio<br>
+                tu voz me invade en levedad de ausencia.</p>
+              <p class="mb-4">¿Qué rumbo ha de seguir mi afán de verte?<br>
+                ¿Qué valla he de violar para tenerte<br>
+                apenas un instante en mi presencia?</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 10: In Praise Only -->
+    <article class="critter-card" id="praise-only">
+      <div class="corner-decor c-tl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-tr"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-bl"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="corner-decor c-br"><svg width="100%" height="100%">
+          <use href="#icon-corner-gothic" />
+        </svg></div>
+      <div class="card-inner">
+        <div class="poem-grid items-start gap-12">
+          <div class="poem-col-left md:pr-8 md:border-r md:border-gray-800">
+            <h2 class="poem-title-gothic text-center">In Praise Only</h2>
+            <span class="author-badge">Pedro Pablo Paredes</span>
+            <div class="poem-text-translation text-xl leading-relaxed">
+              <p class="mb-4"><span class="drop-cap-gothic">A</span>s it soars after the silvery crane, the foot of
+                foam<br>
+                <em>Luis de Góngora</em>
+              </p>
+              <p class="mb-4">His forehead sunk in I don't know what high mist<br>
+                of perpetual solitude, and the smile<br>
+                blooming without end in the breeze<br>
+                that its memories and hopes gather.</p>
+              <p class="mb-4">The dew in the petal, in the feather,<br>
+                the softness, watching over everything she steps on,<br>
+                between the light and the sing, that haste<br>
+                that announces to the heart its foot of foam.</p>
+              <p class="mb-4">Surrounded by ecstatic gleams<br>
+                -inside me, outside me-, colors or<br>
+                melodies pours out its beauty.</p>
+              <p class="mb-4">It neither arrives, nor leaves, nor stays.<br>
+                And in the honeycombs of her voice she entangles<br>
+                the beauty of the world its sweetness.</p>
+            </div>
+          </div>
+          <div class="poem-col-right">
+            <h2 class="poem-title-gothic text-center text-gray-400 opacity-80">Solo Alabanza</h2>
+            <span class="author-badge">Pedro Pablo Paredes</span>
+            <div class="poem-text-original italic text-xl leading-relaxed">
+              <p class="mb-4">Tras la garza argentada, el pie de espuma<br>
+                <em>Luis de Góngora</em>
+              </p>
+              <p class="mb-4">La frente hundida en no sé qué alta bruma<br>
+                de soledad perpetua, y la sonrisa<br>
+                floreciendo sin término en la brisa<br>
+                que sus recuerdos y esperanzas suma.</p>
+              <p class="mb-4">El relente en el pétalo, en la pluma<br>
+                la suavidad, vigilan cuanto pisa,<br>
+                entre la luz y el canto, aquella prisa<br>
+                que anuncia al corazón su pie de espuma.</p>
+              <p class="mb-4">Cercada de extasiados resplandores<br>
+                -dentro de mí, fuera de mí-, colores<br>
+                o músicas derrama su hermosura.</p>
+              <p class="mb-4">Ni llega, ni se marcha, ni se queda.<br>
+                Y en los panales de su voz enreda<br>
+                la belleza del mundo su dulzura.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
+  </div>
+  </div>
+  </article>
+
+  </div><!-- End page-container -->
+
+  <div class="global-lens"></div>
+  <script>
+    // Rebuilt Index System
+    const indexBtn = document.getElementById('indexBtn');
+    const tocOverlay = document.getElementById('tocOverlay');
+    const tocLinks = document.querySelectorAll('.toc-link');
+
+    function openIndex() {
+      tocOverlay.classList.add('show');
+      document.body.style.overflow = 'hidden';
+      // Scroll the overlay to the top when opened
+      tocOverlay.scrollTop = 0;
+    }
+
+    function closeIndex() {
+      tocOverlay.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    // Event listeners
+    indexBtn.addEventListener('click', openIndex);
+
+    // Close when clicking on a link
+    tocLinks.forEach(link => {
+      link.addEventListener('click', closeIndex);
+    });
+
+    // Close when clicking outside the container (background)
+    tocOverlay.addEventListener('click', function (e) {
+      // If clicking the overlay itself (background), close
+      if (e.target === tocOverlay) {
+        closeIndex();
+      }
+    });
+
+    // Close with Escape key
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && tocOverlay.classList.contains('show')) {
+        closeIndex();
+      }
+    })
+
+    // Keyboard Navigation for "Book Mode"
+    document.addEventListener('keydown', (e) => {
+      if (['ArrowUp', 'ArrowDown'].includes(e.key)) {
+        // Find all snap pages
+        // We consider header, intro-section, and critter-card as pages
+        const pages = Array.from(document.querySelectorAll('header, .intro-section, .critter-card'));
+
+        // Find current visible page
+        // Simple heuristic: page closest to scroll top
+        let currentPageIndex = 0;
+        let minDiff = Infinity;
+
+        pages.forEach((page, index) => {
+          const rect = page.getBoundingClientRect();
+          const diff = Math.abs(rect.top); // Distance from top
+          if (diff < minDiff) {
+            minDiff = diff;
+            currentPageIndex = index;
+          }
+        });
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const nextPage = pages[currentPageIndex + 1];
+          if (nextPage) nextPage.scrollIntoView({ behavior: 'smooth' });
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          const prevPage = pages[currentPageIndex - 1];
+          if (prevPage) prevPage.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    });
+
+    const canvas = document.createElement('canvas');
+    canvas.id = 'dither-bg';
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.zIndex = '0';
+    canvas.style.pointerEvents = 'none';
+    document.body.insertBefore(canvas, document.body.firstChild);
+
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      drawDither();
+    }
+    window.addEventListener('resize', resize);
+
+    function drawDither() {
+      const grd = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      grd.addColorStop(0, "#222222");
+      grd.addColorStop(1, "#000000");
+
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
+          const i = (y * canvas.width + x) * 4;
+          const oldPixel = data[i];
+          const newPixel = oldPixel > 128 ? 255 : 0;
+          const err = (oldPixel - newPixel) >> 3;
+
+          data[i] = newPixel;
+          data[i + 1] = newPixel;
+          data[i + 2] = newPixel;
+
+          if (x + 1 < canvas.width) data[i + 4] += err;
+          if (x + 2 < canvas.width) data[i + 8] += err;
+
+          if (y + 1 < canvas.height) {
+            const rowNext = ((y + 1) * canvas.width + x) * 4;
+            if (x > 0) data[rowNext - 4] += err;
+            data[rowNext] += err;
+            if (x + 1 < canvas.width) data[rowNext + 4] += err;
+          }
+          if (y + 2 < canvas.height) {
+            const rowNext2 = ((y + 2) * canvas.width + x) * 4;
+            data[rowNext2] += err;
+          }
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    resize();
+  </script>
+</body>
+
+</html>
