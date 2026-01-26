@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE OSCARS 2026 — Private Ballot (Compact)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Inter:wght@300;400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --gold: #c5a059;
+            --gold-light: #e2c28d;
+            --dark: #050505;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--dark);
+            color: #ffffff;
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+            font-size: 14px;
+            /* Default smaller font size */
+        }
+
+        .serif {
+            font-family: 'Cormorant Garamond', serif;
+        }
+
+        .bg-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% -20%, #1a1a1a 0%, #050505 80%);
+            z-index: -1;
+        }
+
+        .nominee-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease-out;
+            /* Faster transition */
+        }
+
+        .nominee-card:hover:not(.disabled) {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--gold);
+        }
+
+        .nominee-card.selected {
+            background: var(--gold);
+            color: black;
+            border-color: var(--gold);
+            box-shadow: 0 4px 12px rgba(197, 160, 89, 0.3);
+            /* Reduced shadow */
+        }
+
+        .nominee-card.selected p {
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            /* Thinner */
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--gold);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        #printView {
+            display: none;
+            background: white;
+            color: black;
+            min-height: 100vh;
+            padding: 40px;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            #mainUI {
+                display: none !important;
+            }
+
+            #printView {
+                display: block !important;
+            }
+
+            body {
+                background: white;
+            }
+        }
+    </style>
+</head>
+
+<body class="antialiased">
+    <div id="mainUI">
+        <div class="bg-glow"></div>
+        <div class="progress-container no-print">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <!-- Sticky Header / Compact Hero -->
+        <header
+            class="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="text-left flex items-center gap-4">
+                <div>
+                    <span class="text-[10px] uppercase tracking-[0.2em] text-gold opacity-70 block">The Oscars
+                        2026</span>
+                    <h1 class="serif text-2xl leading-none italic">The Official Ballot</h1>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 no-print">
+                <input type="text" id="voterName" placeholder="TU NOMBRE"
+                    class="bg-transparent border border-white/20 rounded px-3 py-1.5 focus:outline-none focus:border-gold transition text-xs w-48 text-center uppercase tracking-wider">
+                <div class="text-xs text-white/50" id="progressText">0/23 Selected</div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-[1400px] mx-auto px-4 py-8 space-y-12" id="mainBallot">
+            <!-- Categories will be injected here -->
+        </main>
+
+        <!-- Floating Footer Action (Smaller) -->
+        <div class="fixed bottom-6 right-6 no-print z-50">
+            <button onclick="showFinalSummary()"
+                class="bg-gold text-black px-6 py-3 rounded-full font-bold shadow-xl hover:bg-white transition transform flex items-center gap-2 text-xs uppercase tracking-widest">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 9V2h12v7" />
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                    <rect x="6" y="14" width="12" height="8" />
+                </svg>
+                Generar
+            </button>
+        </div>
+    </div>
+
+    <!-- View for Results / Print -->
+    <div id="printView" class="serif">
+        <div class="max-w-4xl mx-auto border-2 border-black p-8 relative">
+            <div class="flex justify-between items-end border-b border-black pb-6 mb-8">
+                <div>
+                    <h2 class="text-xs uppercase tracking-widest mb-1">Official Ballot — 2026</h2>
+                    <h3 class="text-4xl italic" id="summaryTitle">The Winners</h3>
+                </div>
+                <p class="text-lg uppercase font-bold" id="voterDisplayName"></p>
+            </div>
+
+            <div id="summaryList" class="grid grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4 text-sm">
+                <!-- Selections will be listed here -->
+            </div>
+
+            <div class="mt-12 text-center no-print">
+                <button onclick="window.print()"
+                    class="bg-black text-white px-6 py-2 rounded-full mr-4 text-xs uppercase tracking-widest">Imprimir /
+                    PDF</button>
+                <button onclick="backToEdit()"
+                    class="border border-black px-6 py-2 rounded-full text-xs uppercase tracking-widest">Volver</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data from previous file
+        const categories = [
+            { id: 1, name: "Mejor Película", nominees: [{ n: "One Battle After Another", i: "PTA" }, { n: "Sinners", i: "Ryan Coogler" }, { n: "Hamnet", i: "Chloé Zhao" }, { n: "Frankenstein", i: "Guillermo del Toro" }, { n: "Sentimental Value", i: "Joachim Trier" }, { n: "Marty Supreme", i: "Josh Safdie" }] },
+            { id: 2, name: "Mejor Dirección", nominees: [{ n: "Paul Thomas Anderson", i: "One Battle After Another" }, { n: "Ryan Coogler", i: "Sinners" }, { n: "Chloé Zhao", i: "Hamnet" }, { n: "Guillermo del Toro", i: "Frankenstein" }, { n: "Joachim Trier", i: "Sentimental Value" }] },
+            { id: 3, name: "Mejor Actor", nominees: [{ n: "Timothée Chalamet", i: "Marty Supreme" }, { n: "Michael B. Jordan", i: "Sinners" }, { n: "Oscar Isaac", i: "Frankenstein" }, { n: "Daniel Craig", i: "Queer" }, { n: "Colman Domingo", i: "Sing Sing" }] },
+            { id: 4, name: "Mejor Actriz", nominees: [{ n: "Jessie Buckley", i: "Hamnet" }, { n: "Renate Reinsve", i: "Sentimental Value" }, { n: "Zendaya", i: "The Drama" }, { n: "Angelina Jolie", i: "Maria" }, { n: "Saoirse Ronan", i: "Blitz" }] },
+            { id: 5, name: "Mejor Actor de Reparto", nominees: [{ n: "Delroy Lindo", i: "Sinners" }, { n: "Jacob Elordi", i: "Frankenstein" }, { n: "Kieran Culkin", i: "A Real Pain" }, { n: "Guy Pearce", i: "The Brutalist" }] },
+            { id: 6, name: "Mejor Actriz de Reparto", nominees: [{ n: "Elle Fanning", i: "Sentimental Value" }, { n: "Wunmi Mosaku", i: "Sinners" }, { n: "Danielle Deadwyler", i: "The Piano Lesson" }, { n: "Lady Gaga", i: "Joker: Folie à Deux" }] },
+            { id: 7, name: "Mejor Guion Original", nominees: [{ n: "Sinners" }, { n: "Sentimental Value" }, { n: "Anora" }, { n: "A Real Pain" }] },
+            { id: 8, name: "Mejor Guion Adaptado", nominees: [{ n: "Hamnet" }, { n: "One Battle After Another" }, { n: "Frankenstein" }, { n: "Queer" }] },
+            { id: 9, name: "Mejor Película de Animación", nominees: [{ n: "Zootopia 2" }, { n: "The Wild Robot" }, { n: "Wallace & Gromit" }, { n: "KPop Demon Hunters" }] },
+            { id: 10, name: "Mejor Película Internacional", nominees: [{ n: "Sentimental Value" }, { n: "Emilia Pérez" }, { n: "I'm Still Here" }, { n: "The Seed of the Sacred Fig" }] },
+            { id: 11, name: "Mejor Fotografía", nominees: [{ n: "One Battle After Another" }, { n: "Sinners" }, { n: "Frankenstein" }, { n: "The Brutalist" }] },
+            { id: 12, name: "Mejor Banda Sonora", nominees: [{ n: "One Battle After Another" }, { n: "Sinners" }, { n: "Frankenstein" }, { n: "Challengers" }] },
+            { id: 13, name: "Mejor Canción Original", nominees: [{ n: "Wicked" }, { n: "Emilia Pérez" }, { n: "Joker: Folie à Deux" }, { n: "Sing Sing" }] },
+            { id: 14, name: "Mejor Montaje", nominees: [{ n: "One Battle After Another" }, { n: "Sinners" }, { n: "Anora" }, { n: "Blitz" }] },
+            { id: 15, name: "Mejor Diseño de Producción", nominees: [{ n: "Frankenstein" }, { n: "Sinners" }, { n: "Wicked" }, { n: "Gladiator II" }] },
+            { id: 16, name: "Mejor Diseño de Vestuario", nominees: [{ n: "Sinners" }, { n: "Frankenstein" }, { n: "Maria" }, { n: "Wicked" }] },
+            { id: 17, name: "Mejor Maquillaje y Peluquería", nominees: [{ n: "Frankenstein" }, { n: "Nosferatu" }, { n: "A Different Man" }, { n: "Dune: Part Two" }] },
+            { id: 18, name: "Mejor Sonido", nominees: [{ n: "Avatar: Fire and Ash" }, { n: "Civil War" }, { n: "Twisters" }, { n: "Dune: Part Two" }] },
+            { id: 19, name: "Mejores Efectos Visuales", nominees: [{ n: "Avatar: Fire and Ash" }, { n: "Kingdom of the Planet of the Apes" }, { n: "Dune: Part Two" }, { n: "Gladiator II" }] },
+            { id: 20, name: "Mejor Documental", nominees: [{ n: "Daughters" }, { n: "Black Box Diaries" }, { n: "Sugarcane" }, { n: "Will & Harper" }] },
+            { id: 21, name: "Mejor Cortometraje", nominees: [{ n: "Nominado 1" }, { n: "Nominado 2" }, { n: "Nominado 3" }] },
+            { id: 22, name: "Mejor Cortometraje Animado", nominees: [{ n: "Nominado A" }, { n: "Nominado B" }, { n: "Nominado C" }] },
+            { id: 23, name: "Mejor Cortometraje Documental", nominees: [{ n: "Nominado X" }, { n: "Nominado Y" }, { n: "Nominado Z" }] }
+        ];
+
+        let selections = {};
+
+        function init() {
+            const container = document.getElementById('mainBallot');
+            categories.forEach(cat => {
+                const section = document.createElement('section');
+                section.className = "category-block";
+                // More compact grid: cols-2 on small, cols-3 on md, cols-4 or 5 on lg
+                section.innerHTML = `
+                    <div class="mb-4 flex items-baseline gap-3 border-b border-white/10 pb-2">
+                        <span class="text-gold serif italic text-lg opacity-80">0${cat.id}</span>
+                        <h2 class="text-lg md:text-xl font-bold tracking-tight uppercase">${cat.name}</h2>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                        ${cat.nominees.map(nom => `
+                            <div class="nominee-card p-3 rounded-lg cursor-pointer group flex flex-col justify-between h-full min-h-[80px]" onclick="select(this, ${cat.id}, '${nom.n}')">
+                                <h3 class="text-sm font-semibold leading-tight group-hover:text-gold transition">${nom.n}</h3>
+                                ${nom.i ? `<p class="text-[10px] text-white/40 mt-2 uppercase tracking-wider truncate">${nom.i}</p>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(section);
+            });
+            window.addEventListener('scroll', updateProgress);
+            updateProgress();
+        }
+
+        function select(el, catId, name) {
+            const parent = el.parentElement;
+            parent.querySelectorAll('.nominee-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            selections[catId] = name;
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const selectedCount = Object.keys(selections).length;
+            const percentage = (selectedCount / categories.length) * 100;
+            const bar = document.getElementById('progressBar');
+            if (bar) bar.style.width = percentage + '%';
+
+            const text = document.getElementById('progressText');
+            if (text) text.innerText = `${selectedCount}/${categories.length} Selected`;
+        }
+
+        function showFinalSummary() {
+            const name = document.getElementById('voterName').value || 'Member of the Academy';
+            document.getElementById('voterDisplayName').innerText = name;
+
+            const summaryList = document.getElementById('summaryList');
+            summaryList.innerHTML = '';
+
+            categories.forEach(cat => {
+                const selection = selections[cat.id];
+                if (selection) { // Only show selected or prompt? Let's show all but styling empty ones
+                    const item = document.createElement('div');
+                    item.className = "flex flex-col border-l-2 border-gray-100 pl-3 py-1";
+                    item.innerHTML = `
+                        <span class="text-[10px] uppercase tracking-widest text-gray-400 mb-0.5">${cat.name}</span>
+                        <span class="text-sm font-bold serif italic">${selection}</span>
+                    `;
+                    summaryList.appendChild(item);
+                } else {
+                    const item = document.createElement('div');
+                    item.className = "flex flex-col border-l-2 border-gray-100 pl-3 py-1 opacity-50";
+                    item.innerHTML = `
+                        <span class="text-[10px] uppercase tracking-widest text-gray-400 mb-0.5">${cat.name}</span>
+                        <span class="text-sm font-serif italic text-gray-300">No selection</span>
+                    `;
+                    summaryList.appendChild(item);
+                }
+            });
+
+            document.getElementById('mainUI').style.display = 'none';
+            document.getElementById('printView').style.display = 'block';
+            window.scrollTo(0, 0);
+        }
+
+        function backToEdit() {
+            document.getElementById('mainUI').style.display = 'block';
+            document.getElementById('printView').style.display = 'none';
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
