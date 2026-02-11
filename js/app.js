@@ -59,76 +59,77 @@ async function init() {
         const section = document.createElement('section');
         section.id = `cat-${cat.id}`;
 
-        // Dynamic classes based on mode
         const isCompact = window.COMPACT_MODE === true;
+        section.className = isCompact ? "category-block fade-in scroll-mt-24 mb-6" : "category-block fade-in scroll-mt-32";
 
-        section.className = isCompact
-            ? "category-block fade-in scroll-mt-24 mb-6"
-            : "category-block fade-in scroll-mt-32";
-
-        const gridClass = isCompact
-            ? "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2"
-            : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4";
-
-        const cardClass = isCompact
-            ? "nominee-card p-3 rounded-lg cursor-pointer group flex flex-col justify-between h-full min-h-[75px] relative"
-            : "nominee-card p-6 rounded-2xl cursor-pointer group relative";
-
-        const headerClass = isCompact
-            ? "mb-4 flex items-baseline gap-3 border-b border-white/10 pb-2"
-            : "mb-10 text-center md:text-left";
+        const gridClass = isCompact ? "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4";
+        const cardClass = isCompact ? "nominee-card p-3 rounded-lg cursor-pointer group flex flex-col justify-between h-full min-h-[75px] relative" : "nominee-card p-6 rounded-2xl cursor-pointer group relative";
+        const headerClass = isCompact ? "mb-4 flex items-baseline gap-3 border-b border-white/10 pb-2" : "mb-10 text-center md:text-left";
 
         const titleHtml = isCompact
-            ? `<span class="text-gold text-sm opacity-60">0${cat.id}</span>
-               <h2 class="text-lg md:text-xl font-bold tracking-tight uppercase" style="font-family: 'Bluee Next', sans-serif;">${cat.name}</h2>`
-            : `<span class="text-gold serif italic text-xl">Category ${cat.id.toString().padStart(2, '0')}</span>
-               <h2 class="text-4xl md:text-5xl font-bold tracking-tight mt-2 uppercase">${cat.name}</h2>`;
-
-        const nomineeNameClass = isCompact
-            ? "text-sm font-semibold leading-tight group-hover:text-gold transition relative z-10"
-            : "text-lg font-bold group-hover:text-gold transition relative z-10";
-
-        const nomineeInfoClass = isCompact
-            ? "text-[10px] text-white/40 mt-1 uppercase tracking-wider truncate relative z-10"
-            : "text-xs text-white/40 mt-1 uppercase tracking-widest relative z-10";
+            ? `<span class="text-gold text-sm opacity-60">0${cat.id}</span><h2 class="text-lg md:text-xl font-bold tracking-tight uppercase" style="font-family: 'Bluee Next', sans-serif;">${cat.name}</h2>`
+            : `<span class="text-gold serif italic text-xl">Category ${cat.id.toString().padStart(2, '0')}</span><h2 class="text-4xl md:text-5xl font-bold tracking-tight mt-2 uppercase">${cat.name}</h2>`;
 
         section.innerHTML = `
             <div class="${headerClass}">
                 ${titleHtml}
             </div>
-            <div class="${gridClass}">
-                ${cat.nominees.map(nom => {
+            <div class="${gridClass}" id="grid-cat-${cat.id}"></div>
+        `;
+
+        container.appendChild(section);
+
+        // Build nominee cards using DOM methods to avoid unsafe innerHTML
+        const grid = section.querySelector(`#grid-cat-${cat.id}`);
+        cat.nominees.forEach(nom => {
             const filmTitle = nom.i || nom.n;
             const movieInfo = getMovieInfo(filmTitle);
 
-            // Create tooltip content if movie data exists
-            let tooltipHtml = '';
+            const card = document.createElement('div');
+            card.className = cardClass;
+            card.setAttribute('role', 'button');
+            card.tabIndex = 0;
+
+            // Tooltip (if available)
             if (movieInfo && (movieInfo.director || movieInfo.cast?.length || movieInfo.synopsis)) {
                 const tooltipContent = [];
                 if (movieInfo.director) tooltipContent.push(`Dir: ${movieInfo.director}`);
                 if (movieInfo.cast && movieInfo.cast.length > 0) tooltipContent.push(`Cast: ${movieInfo.cast.slice(0, 2).join(', ')}`);
                 if (movieInfo.synopsis) tooltipContent.push(movieInfo.synopsis.substring(0, 100) + '...');
 
-                tooltipHtml = `
-                            <div class="movie-tooltip absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-black/95 text-white text-xs p-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none w-64 z-50 hidden md:block">
-                                <div class="space-y-1">
-                                    ${tooltipContent.map(line => `<p class="text-[10px] leading-relaxed">${line}</p>`).join('')}
-                                </div>
-                            </div>
-                        `;
+                const tooltip = document.createElement('div');
+                tooltip.className = 'movie-tooltip absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-black/95 text-white text-xs p-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none w-64 z-50 hidden md:block';
+                tooltipContent.forEach(line => {
+                    const p = document.createElement('p');
+                    p.className = 'text-[10px] leading-relaxed';
+                    p.textContent = line;
+                    tooltip.appendChild(p);
+                });
+                card.appendChild(tooltip);
             }
 
-            return `
-                        <div class="${cardClass}" onclick="select(this, ${cat.id}, '${nom.n.replace(/'/g, "\\'")}')">
-                            ${tooltipHtml}
-                            <h3 class="${nomineeNameClass}">${nom.n}</h3>
-                            ${nom.i ? `<p class="${nomineeInfoClass}">${nom.i}</p>` : ''}
-                        </div>
-                    `;
-        }).join('')}
-            </div>
-        `;
-        container.appendChild(section);
+            const h3 = document.createElement('h3');
+            h3.className = isCompact ? "text-sm font-semibold leading-tight group-hover:text-gold transition relative z-10" : "text-lg font-bold group-hover:text-gold transition relative z-10";
+            h3.textContent = nom.n;
+            card.appendChild(h3);
+
+            if (nom.i) {
+                const pinfo = document.createElement('p');
+                pinfo.className = isCompact ? "text-[10px] text-white/40 mt-1 uppercase tracking-wider truncate relative z-10" : "text-xs text-white/40 mt-1 uppercase tracking-widest relative z-10";
+                pinfo.textContent = nom.i;
+                card.appendChild(pinfo);
+            }
+
+            card.addEventListener('click', () => select(card, cat.id, nom.n));
+            card.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    select(card, cat.id, nom.n);
+                }
+            });
+
+            grid.appendChild(card);
+        });
     });
 
     setupStickyNav();
@@ -151,6 +152,22 @@ async function init() {
             exportImage();
         });
     }
+
+    const btnPrint = document.getElementById('btnPrint');
+    if (btnPrint) {
+        btnPrint.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.print();
+        });
+    }
+
+    const btnEdit = document.getElementById('btnEdit');
+    if (btnEdit) {
+        btnEdit.addEventListener('click', (e) => {
+            e.preventDefault();
+            backToEdit();
+        });
+    }
 }
 
 
@@ -171,7 +188,10 @@ function setupStickyNav() {
         };
 
         // Tooltip
-        dot.innerHTML = `<span class="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] uppercase tracking-widest text-gold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">${cat.name}</span>`;
+        const tip = document.createElement('span');
+        tip.className = 'absolute right-6 top-1/2 -translate-y-1/2 text-[10px] uppercase tracking-widest text-gold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap';
+        tip.textContent = cat.name;
+        dot.appendChild(tip);
 
         nav.appendChild(dot);
     });
@@ -196,6 +216,17 @@ function updateActiveNav() {
 
 function select(el, catId, name) {
     const parent = el.parentElement;
+
+    // If this card is already selected, deselect it
+    const wasSelected = el.classList.contains('selected');
+    if (wasSelected) {
+        el.classList.remove('selected');
+        delete selections[catId];
+        updateProgress();
+        updateActiveNav();
+        return;
+    }
+
     parent.querySelectorAll('.nominee-card').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
 
@@ -239,20 +270,30 @@ function showFinalSummary() {
         if (summaryList) {
             summaryList.innerHTML = '';
             categories.forEach(cat => {
-                // Default to 'Sin seleccionar' if no selection
-                const selection = selections[cat.id] || '<span class="text-gray-400">Sin seleccionar</span>';
-
                 const item = document.createElement('div');
-                item.className = "border-b border-black/10 py-2 flex flex-col";
-                // Ensure proper string interpolation
-                item.innerHTML = `
-                    <span class="text-[10px] uppercase tracking-widest text-gray-500">${cat.name}</span>
-                    <span class="text-lg font-semibold italic">${selection}</span>
-                `;
+                item.className = 'ballot-category';
+
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'category-name';
+                labelSpan.textContent = cat.name;
+
+                const selectedBox = document.createElement('div');
+                selectedBox.className = 'selected-box';
+                if (selections[cat.id]) {
+                    selectedBox.textContent = selections[cat.id];
+                } else {
+                    const empty = document.createElement('span');
+                    empty.textContent = 'Sin seleccionar';
+                    empty.style.color = '#9b9b9b';
+                    selectedBox.appendChild(empty);
+                }
+
+                item.appendChild(labelSpan);
+                item.appendChild(selectedBox);
                 summaryList.appendChild(item);
             });
         } else {
-            console.error("Summary list element not found!");
+            console.error('Summary list element not found!');
         }
 
         const mainUI = document.getElementById('mainUI');
@@ -300,15 +341,15 @@ function exportImage() {
 
     Object.assign(clone.style, {
         position: 'absolute',
-        top: '-9999px',
-        left: '-9999px',
+        top: '10px',
+        left: '10px',
         display: 'block',
         visibility: 'visible',
         width: `${width}px`,
         height: 'auto',
         background: 'white',
         color: 'black',
-        zIndex: '-1',
+        zIndex: '10000',
         overflow: 'visible',
         padding: '40px'
     });
@@ -325,8 +366,15 @@ function exportImage() {
     // 4. Append to body so it renders
     document.body.appendChild(clone);
 
-    // 5. Short timeout to ensure styles are applied
-    setTimeout(() => {
+    // Remove any elements that should not appear in the exported image
+    clone.querySelectorAll('.no-print').forEach(n => n.remove());
+    // Remove any buttons left behind
+    clone.querySelectorAll('button').forEach(b => b.remove());
+
+    // No inline print-style injection here; the main stylesheet defines ballot styles.
+
+    // Wait for fonts and styles to be ready before rendering
+    const renderCanvas = () => {
         html2canvas(clone, {
             scale: 2,
             backgroundColor: "#ffffff",
@@ -341,15 +389,19 @@ function exportImage() {
             link.click();
 
             // Cleanup
-            document.body.removeChild(clone);
+            if (document.body.contains(clone)) document.body.removeChild(clone);
         }).catch(err => {
             console.error("Image export failed:", err);
             alert("Image generation failed. Please use 'Imprimir PDF' instead.");
-            if (document.body.contains(clone)) {
-                document.body.removeChild(clone);
-            }
+            if (document.body.contains(clone)) document.body.removeChild(clone);
         });
-    }, 100);
+    };
+
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => setTimeout(renderCanvas, 200)).catch(() => setTimeout(renderCanvas, 300));
+    } else {
+        setTimeout(renderCanvas, 300);
+    }
 }
 
 window.select = select;

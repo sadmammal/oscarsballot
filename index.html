@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE OSCARS 2026 — Compact Ballot</title>
+    <title>La quiniela de los Oscars 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Inter:wght@300;400;700&display=swap"
@@ -74,10 +74,9 @@
         <section class="hero-section flex flex-col items-center justify-center px-6 text-center relative z-10 pt-6">
             <span class="text-[10px] uppercase tracking-[0.4em] text-gold mb-2 opacity-70">98th Academy Awards
                 <br>Unofficial Ballot</span>
-            <h1 class="serif italic text-gradient-gold leading-none mb-4">Nuestra muy excesiva quiniela de los Oscars
-                <br>en
-                homenaje a la amistad y la competitividad <br> correspondiente a la posibilidad de apostar sobre cosas
-                tontas
+            <h1 class="serif italic text-gradient-gold leading-none mb-4">Our very excessive Oscars thingy
+<br>in honor of friendship and competitiveness
+<br>and the possibility of betting on silly things
             </h1>
         </section>
 
@@ -94,11 +93,12 @@
 
             <!-- Name Input Container -->
             <div class="relative inline-block">
+                <label for="voterName" class="sr-only">Voter name</label>
                 <input type="text" id="voterName" placeholder="Your Name"
                     class="bg-transparent px-4 py-2 focus:outline-none transition-all duration-300 text-center serif italic text-xl tracking-wide placeholder:text-white/20 w-64 text-white focus:text-gold border-b border-white/20 focus:border-gold">
             </div>
 
-            <button id="btnGenerate" onclick="showFinalSummary()"
+            <button id="btnGenerate"
                 class="bg-[#c5a059] text-black px-12 py-4 rounded-full font-bold shadow-xl hover:bg-white transition transform flex items-center gap-2 text-sm uppercase tracking-widest cursor-pointer border border-black/10 mt-4">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -106,38 +106,45 @@
                     <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
                     <rect x="6" y="14" width="12" height="8" />
                 </svg>
-                Generar Resultados
+                Generate ballot
             </button>
         </div>
     </div>
 
     <!-- View for Results / Print (Shared structure) -->
     <div id="printView" class="serif">
-        <div class="max-w-4xl mx-auto border-4 border-black p-8 md:p-12 relative">
-            <div class="flex flex-col items-center justify-center text-center mb-8">
-                <h2 class="text-xs uppercase tracking-widest mb-2">Official Ballot — 2026</h2>
-                <h3 class="text-5xl italic mb-2" id="summaryTitle">The Winner is...</h3>
-                <p class="text-lg uppercase border-t border-b border-black py-1 px-8 mt-2" id="voterDisplayName"></p>
-            </div>
+        <div class="max-w-4xl mx-auto p-8 md:p-12 relative ballot">
+            <header class="ballot-header flex items-center justify-between mb-6">
+                <div class="ballot-brand flex items-center gap-3">
+                    <img src="oscar-academy-award-svgrepo-com.svg" alt="Oscar statuette" width="48" height="48" style="object-fit:contain;" />
+                    <div>
+                        <div class="text-xs uppercase tracking-widest text-gray-600">Documento final final.png</div>
+                        <div class="text-xl font-semibold">Quiniela Oscars 2026</div>
+                    </div>
+                </div>
 
-            <div id="summaryList" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                <!-- Selections will be listed here -->
-            </div>
+                <div class="text-right">
+                    <div id="summaryTitle" class="text-lg text-gray-700">Your Selections</div>
+                    <div id="voterDisplayName" class="text-xl text-gray-600 mt-1"></div>
+                </div>
+            </header>
 
-            <div class="mt-12 text-center no-print flex flex-col md:flex-row justify-center gap-4">
-                <button id="btnExport"
-                    class="bg-black text-white px-6 py-2 rounded-full hover:bg-gold hover:text-black transition text-xs uppercase tracking-widest">
-                    Guardar Imagen
-                </button>
-                <button onclick="window.print()"
-                    class="border border-black px-6 py-2 rounded-full hover:bg-black hover:text-white transition text-xs uppercase tracking-widest">
-                    Imprimir PDF
-                </button>
-                <button onclick="backToEdit()"
-                    class="border border-black px-6 py-2 rounded-full hover:bg-black hover:text-white transition text-xs uppercase tracking-widest">
-                    Editar Votos
-                </button>
-            </div>
+            <main>
+                <div id="summaryList" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <!-- Selections will be listed here as ballot cards -->
+                </div>
+            </main>
+
+            <footer class="mt-8 no-print">
+                <div class="flex items-center justify-between">
+                    <div class="text-xs text-gray-600 italic">Quinielas are betting games in which participants <br>predict the results of an event or series of events</b></div>
+                    <div class="flex gap-3">
+                        <button id="btnExport" class="export-btn no-print">Save image</button>
+                        <button id="btnPrint" class="export-btn no-print">Print PDF</button>
+                        <button id="btnEdit" class="export-btn no-print">Edit Votes</button>
+                    </div>
+                </div>
+            </footer>
         </div>
     </div>
 
